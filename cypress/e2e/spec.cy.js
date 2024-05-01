@@ -108,8 +108,6 @@ describe('Prova de Programação Web', () => {
           municipiosUrl = href.replace(/[.]/, '').split('=')[0]
         } else {
           municipiosUrl = '/' + href.split('=')[0]
-
-          console.log({ municipiosUrl })
         }
       })
 
@@ -119,6 +117,18 @@ describe('Prova de Programação Web', () => {
     it('(0.5) Os links (âncoras) devem ter cor #333 com uma transição no hover para alterar a opacidade para 0.8', () => {
       cy.get('main ul a').should('have.css', 'color', 'rgb(51, 51, 51)')
       cy.get('main ul a').should('have.css', 'transition')
+    })
+
+    it('Valida e atualiza minicipios url', () => {
+      cy.request({
+        method: 'GET',
+        url: `${url}${municipiosUrl}=AP`,
+        failOnStatusCode: false,
+      }).then((response) => {
+        if (response.status === 404) {
+          municipiosUrl = `/municipios/index.html?uf`
+        }
+      })
     })
   })
 
