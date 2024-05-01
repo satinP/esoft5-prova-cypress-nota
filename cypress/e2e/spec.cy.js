@@ -205,23 +205,23 @@ describe('Prova de Programação Web', () => {
 
   describe('Página de Favoritos (./favoritos/index.html) (1 ponto)', () => {
     it('(1) Buscar a lista de favoritos salva em localStorage e exibir o nome do municipio em uma ul/li cada município favoritado.', () => {
-      localStorage.setItem(
-        'favoritos',
-        JSON.stringify([
-          {
-            id: 1506351,
-            nome: 'Santa Bárbara do Pará',
-          },
-          {
-            id: 1600238,
-            nome: 'Ferreira Gomes',
-          },
-          {
-            id: 1600279,
-            nome: 'Laranjal do Jari',
-          },
-        ])
-      )
+      cy.visit(`${url}${municipiosUrl}=AP`)
+      const municipios = ['Serra do Navio', 'Amapá', 'Pedra Branca do Amapari']
+
+      cy.get('main ul > li:nth-child(1)').within(($li) => {
+        //Serra do Navio
+        $li.find('button').click()
+      })
+
+      cy.get('main ul > li:nth-child(2)').within(($li) => {
+        // 'Amapá'
+        $li.find('button').click()
+      })
+
+      cy.get('main ul > li:nth-child(3)').within(($li) => {
+        // 'Pedra Branca do Amapari'
+        $li.find('button').click()
+      })
 
       cy.visit(`${url}${favoritosUrl}`)
 
@@ -230,9 +230,9 @@ describe('Prova de Programação Web', () => {
         .invoke('getItem', 'favoritos')
         .then((favoritos) => {
           const favoritosArray = JSON.parse(favoritos)
-          cy.get('main ul li').should('have.length', favoritosArray.length)
-          favoritosArray.forEach((favorito, index) => {
-            cy.get('main ul > li').eq(index).contains(favorito.nome)
+          cy.get('main ul li').should('have.length', 3)
+          favoritosArray.forEach((_, index) => {
+            cy.get('main ul > li').eq(index).contains(municipios[index])
           })
         })
     })
