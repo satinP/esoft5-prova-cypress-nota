@@ -146,7 +146,13 @@ describe('Prova de Programação Web', () => {
     })
 
     it('(0.5) Exiba o título da página como "Municípios de {UF}", onde {UF} é substituído pelo UF recebido na querystring', () => {
-      cy.get('h1').contains('Municípios de AP', { matchCase: false })
+      cy.get('h1').should(($h1) => {
+        const text = $h1
+          .text()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+        expect(text.toLowerCase()).to.match(/munic[ií]pios de ap/i)
+      })
     })
 
     it('(0.25) Liste os municípios dentro de uma lista não ordenada (ul)', () => {
