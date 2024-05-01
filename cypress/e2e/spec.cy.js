@@ -28,6 +28,23 @@ describe('Prova de Programação Web', () => {
         })
     })
 
+    it('(0.5) Utilize a seguinte estrutura de projeto, onde a Home ficará no index.html e as outras páginas ficarão em pastas separadas, também com index.html: Página principal: ./index.html; Página de municípios: ./municipios/index.html; Página de favoritos: ./favoritos/index.html', () => {
+      // index.html
+      cy.request('GET', `${url}/index.html`).then((res) => {
+        expect(res.status).to.equal(200)
+      })
+
+      // municipios/index.html
+      cy.request('GET', `${url}/municipios/index.html`).then((res) => {
+        expect(res.status).to.equal(200)
+      })
+
+      // favoritos/index.html
+      cy.request('GET', `${url}/favoritos/index.html`).then((res) => {
+        expect(res.status).to.equal(200)
+      })
+    })
+
     it('(1) Utilize uma grid para organizar o conteúdo da página, onde o conteúdo principal (main) ocupa a maior parte do espaço', () => {
       cy.get('main').parent().should('have.css', 'display', 'grid')
     })
