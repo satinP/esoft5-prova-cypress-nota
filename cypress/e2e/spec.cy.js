@@ -13,10 +13,11 @@ describe('Prova de Programação Web', () => {
 
     it('Salva favoritosUrl', () => {
       cy.get('a')
-        .not('main a')
         .contains('favoritos', {
           matchCase: false,
         })
+        .parents('header, nav')
+        .find('a')
         .invoke('attr', 'href')
         .then((href) => {
           if (href.startsWith('.')) {
