@@ -243,15 +243,27 @@ describe('Prova de Programação Web', () => {
       cy.visit(url)
 
       cy.get('header a')
-        .should('have.attr', 'href')
-        .and('include', 'favoritos/index.html')
+        .should('exist')
+        .should(($anchors) => {
+          const filteredAnchors = $anchors.filter((_, anchor) => {
+            return anchor.textContent
+              .trim()
+              .toLowerCase()
+              .includes('favorito', { matchCase: false })
+          })
+
+          expect(filteredAnchors).to.have.length.above(0)
+
+          const href = filteredAnchors[0].getAttribute('href')
+          expect(href).to.include('favoritos/index.html')
+        })
 
       cy.visit(`${url}${municipiosUrl}=AP`)
 
       cy.get('header a')
         .should('exist')
         .should(($anchors) => {
-          const filteredAnchors = $anchors.filter((index, anchor) => {
+          const filteredAnchors = $anchors.filter((_, anchor) => {
             return anchor.textContent
               .trim()
               .toLowerCase()
@@ -268,17 +280,39 @@ describe('Prova de Programação Web', () => {
     it('(0.25) Adicione um link (âncora) com o texto "Ir para a home", no header das páginas de municípios e de favoritos, que direciona para a página principal (./index.html)', () => {
       cy.visit(`${url}${municipiosUrl}=AP`)
 
-      cy.get('header a').should('satisfy', ($a) => {
-        const attr = $a.attr('href')
-        return attr.includes('../index.html') || listStyle === '../'
-      })
+      cy.get('header a')
+        .should('exist')
+        .should(($anchors) => {
+          const filteredAnchors = $anchors.filter((_, anchor) => {
+            return anchor.textContent
+              .trim()
+              .toLowerCase()
+              .includes('home', { matchCase: false })
+          })
+
+          expect(filteredAnchors).to.have.length.above(0)
+
+          const href = filteredAnchors[0].getAttribute('href')
+          expect(href).to.include('../index.html')
+        })
 
       cy.visit(`${url}${favoritosUrl}`)
 
-      cy.get('header a').should('satisfy', ($a) => {
-        const attr = $a.attr('href')
-        return attr === '../index.html' || listStyle === '../'
-      })
+      cy.get('header a')
+        .should('exist')
+        .should(($anchors) => {
+          const filteredAnchors = $anchors.filter((_, anchor) => {
+            return anchor.textContent
+              .trim()
+              .toLowerCase()
+              .includes('home', { matchCase: false })
+          })
+
+          expect(filteredAnchors).to.have.length.above(0)
+
+          const href = filteredAnchors[0].getAttribute('href')
+          expect(href).to.include('../index.html')
+        })
     })
   })
 })
