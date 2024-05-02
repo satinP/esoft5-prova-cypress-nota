@@ -6,7 +6,7 @@ let municipiosUrl = ''
 let favoritosUrl = ''
 
 describe('Prova de Programação Web', () => {
-  describe('Estrutura da Página (1.5 pontos)', () => {
+  describe('Estrutura da Página (2 pontos)', () => {
     beforeEach(() => {
       cy.visit(url)
     })
