@@ -1,318 +1,349 @@
-const url = ''
+//  Trocar a url
+const url = 'https://satinp.github.io/portal-ibge'
 
-const apiUrl = 'https://servicodados.ibge.gov.br/api/v1/localidades/estados'
+const apiUrl = 'https://servicodados.ibge.gov.br/api/v3/noticias'
 
-let municipiosUrl = ''
-let favoritosUrl = ''
+describe('Prova de Programação Web 2o bimestre', () => {
+  beforeEach(() => {
+    cy.visit(url)
+    cy.intercept('GET', `${apiUrl}*`).as('getNoticias')
+  })
 
-describe('Prova de Programação Web', () => {
-  describe('Estrutura da Página (2 pontos)', () => {
-    beforeEach(() => {
-      cy.visit(url)
+  describe('(0.5) Estrutura de Grid na Página, Cor do Header, Main e Footer', () => {
+    it('(0.2) Utilize um sistema de grid, como o CSS Grid para estruturar a página', () => {
+      cy.get('body').should('have.css', 'display', 'grid')
     })
 
-    it('Salva favoritosUrl', () => {
-      cy.get('a')
-        .contains('favoritos', {
-          matchCase: false,
-        })
-        .parents('header, nav')
-        .find('a')
-        .invoke('attr', 'href')
-        .then((href) => {
-          if (href.startsWith('.')) {
-            favoritosUrl = href.replace(/[.]/, '').split('=')[0]
-          } else {
-            favoritosUrl = '/' + href.split('=')[0]
-          }
-        })
-    })
-
-    it('(0.5) Utilize a seguinte estrutura de projeto, onde a Home ficará no index.html e as outras páginas ficarão em pastas separadas, também com index.html: Página principal: ./index.html; Página de municípios: ./municipios/index.html; Página de favoritos: ./favoritos/index.html', () => {
-      // index.html
-      cy.request('GET', `${url}/index.html`).then((res) => {
-        expect(res.status).to.equal(200)
-      })
-
-      // municipios/index.html
-      cy.request('GET', `${url}/municipios/index.html`).then((res) => {
-        expect(res.status).to.equal(200)
-      })
-
-      // favoritos/index.html
-      cy.request('GET', `${url}/favoritos/index.html`).then((res) => {
-        expect(res.status).to.equal(200)
-      })
-    })
-
-    it('(1) Utilize uma grid para organizar o conteúdo da página, onde o conteúdo principal (main) ocupa a maior parte do espaço', () => {
-      cy.get('main').parent().should('have.css', 'display', 'grid')
-    })
-
-    it('(0.25) O header tem cor de fundo #0074d9 e o footer tem cor de fundo #333', () => {
+    it('(0.1) Utilize a cor #4682b4 para o background do <header> e <footer>, a cor #f0f0f0 para o background do <main>', () => {
       cy.get('header').should(
         'have.css',
         'background-color',
-        'rgb(0, 116, 217)'
+        'rgb(70, 130, 180)'
       )
-
-      cy.get('footer').should('have.css', 'background-color', 'rgb(51, 51, 51)')
+      cy.get('footer').should(
+        'have.css',
+        'background-color',
+        'rgb(70, 130, 180)'
+      )
+      cy.get('main').should(
+        'have.css',
+        'background-color',
+        'rgb(240, 240, 240)'
+      )
     })
 
-    it('(0.25) Adicione o texto "© 2024 Prova de Programação Web" no footer', () => {
-      cy.get('footer').contains('© 2024 Prova de Programação Web', {
-        matchCase: false,
+    it('(0.2) Defina 100ch como tamanho máximo do conteúdo principal', () => {
+      // 100ch = 100 * width of the '0' character
+      // 100ch no tamanho de fonte padrão do navegador é aproximadamente 890px
+      cy.get('main ul').should(($element) => {
+        const maxWidth = parseFloat($element.css('max-width'))
+
+        // Verificando se o valor está no intervalo desejado
+        expect(maxWidth).to.be.gte(880)
+        expect(maxWidth).to.be.lte(900)
       })
     })
   })
 
-  describe('Página de Estados (./index.html) (2.5 pontos)', () => {
-    beforeEach(() => {
-      cy.intercept('GET', `${apiUrl}*`).as('ibgeRequest')
-
-      cy.visit(url)
+  describe('(0.6) Form de busca', () => {
+    it('(0.1) Crie um formulário (<form>) para o campo de busca, no header', () => {
+      cy.get('header form').should('exist')
     })
 
-    it('(1) Utilize a API do IBGE para buscar dados dos estados brasileiros', () => {
-      cy.wait('@ibgeRequest', { timeout: 10000 })
-        .its('response.statusCode')
-        .should('eq', 200)
+    it('(0.2) Deixe o input centralizado', () => {
+      cy.get('header form')
+        .parent()
+        .should('have.css', 'justify-content', 'center')
     })
 
-    it('(0.25) Liste o nome de cada estado dentro de uma lista (ul/li).', () => {
-      cy.get('main ul li').should('exist')
-      cy.get('main ul > li').should('have.length.above', 1)
+    it('(0.1) Adicione um botão dentro do input de busca, para ser o submit. Utilize o ícone 🔍. Adicionar cursor pointer', () => {
+      cy.get('header form button')
+        .should('contain.text', '🔍')
+        .and('have.css', 'cursor', 'pointer')
     })
 
-    it('(0.25) Remova os bullet points da lista', () => {
-      cy.get('main ul').should('exist')
-      cy.get('main ul').should('satisfy', ($ul) => {
-        const listStyleType = $ul.css('list-style-type')
-        const listStyle = $ul.css('list-style')
-        const listItemStyle = $ul.find('li').css('list-style-type')
-        return (
-          listStyleType === 'none' ||
-          listStyle === 'none' ||
-          listItemStyle === 'none'
-        )
-      })
+    it('(0.2) Alinhe o botão dentro do campo de busca utilizando position: absolute', () => {
+      cy.get('header form button').should('have.css', 'position', 'absolute')
+    })
+  })
+
+  describe('(1.65) Filtro', () => {
+    it('(0.1) Utilize a tag <svg> com o código SVG fornecido para criar o ícone de filtro', () => {
+      cy.get('header button svg').should('exist')
     })
 
-    it('(0.5) Cada estado deve ser um link (âncora) que direciona para a página de municípios (./municipios/index.html), passando o UF do estado via querystring', () => {
-      cy.get('main ul a').should('exist')
+    it('(0.1) Alinhe o ícone de filtro à direita do header', () => {
+      cy.get('header div > button')
+        .should('have.css', 'position', 'absolute')
+        .and('have.css', 'right', '10px')
+    })
 
-      cy.get('main ul a:first-of-type').should(($a) => {
-        let href = $a.attr('href')
+    it('(0.1) O ícone deve ser clicável e abrir um modal (<dialog>) com os filtros. Adicionar cursor pointer', () => {
+      cy.get('dialog').should('not.be.visible')
+      cy.get('header svg').click()
+      cy.get('dialog').should('be.visible')
+    })
 
-        if (href.startsWith('.')) {
-          municipiosUrl = href.replace(/[.]/, '').split('=')[0]
-        } else {
-          municipiosUrl = '/' + href.split('=')[0]
+    it('(1) Exiba o número de filtros ativos, baseado na query string, ao lado do ícone de filtro (não contar page e busca)', () => {
+      cy.visit(`${url}?tipo=noticia&qtd=5&de=2021-01-01&ate=2021-12-31`)
+      cy.get('header svg').siblings().should('contain.text', '4')
+    })
+
+    it('(0.35) Caso exista filtros na querystring, eles deverão ser aplicados nos inputs', () => {
+      cy.visit(`${url}?qtd=20&tipo=release&de=2024-06-14&ate=2024-06-15`)
+
+      cy.contains('dialog form label', 'Tipo:')
+        .next('select')
+        .then(($select) => {
+          // Busca a option pelo texto "Release" dentro do select encontrado
+          cy.wrap($select)
+            .contains('option', 'Release')
+            .then(($option) => {
+              // Armazena o value da option em uma constante
+              const optionValue = $option.val()
+
+              // Verifica se o value do select é igual ao value da option
+              cy.wrap($option).parent().should('have.value', optionValue)
+            })
+        })
+
+      cy.contains('dialog form label', 'Quantidade:')
+        .next('select')
+        .then(($select) => {
+          cy.wrap($select)
+            .contains('option', '20')
+            .then(($option) => {
+              // Armazena o value da option em uma constante
+              const optionValue = $option.val()
+
+              cy.wrap($option).parent().should('have.value', optionValue)
+            })
+        })
+
+      cy.contains('dialog form label', 'De:')
+        .next('input')
+        .then(($input) => {
+          cy.wrap($input).should('have.value', '2024-06-14')
+        })
+
+      cy.contains('dialog form label', 'Até:')
+        .next('input')
+        .then(($input) => {
+          cy.wrap($input).should('have.value', '2024-06-15')
+        })
+    })
+  })
+
+  describe('(2.85) Filtros em um Dialog HTML', () => {
+    it('(0.5) Utilize a tag <dialog> do HTML para criar o modal de filtros', () => {
+      cy.get('dialog').should('exist')
+    })
+
+    it('(0.25) Inclua os campos de filtro "Tipo", "Quantidade", "De" e "Até" dentro do dialog', () => {
+      cy.contains('dialog form label', 'Tipo:').should('exist')
+      cy.contains('dialog form label', 'Quantidade:').should('exist')
+      cy.contains('dialog form label', 'De:').should('exist')
+      cy.contains('dialog form label', 'Até:').should('exist')
+    })
+
+    it('(0.25) Os filtros deverão ficar em um form', () => {
+      cy.get('dialog form').should('exist')
+    })
+
+    it('(0.25) Inicie sempre a quantidade com 10, e as options sendo múltiplos de 5', () => {
+      cy.contains('dialog form label', 'Quantidade:')
+        .next('select')
+        .then(($select) => {
+          cy.wrap($select).should('have.value', '10')
+        })
+    })
+
+    it('(0.25) Adicione um ícone de "X" no canto superior direito do modal para fechá-lo', () => {
+      cy.get('dialog').then(($dialog) => {
+        if ($dialog.find(':contains("×")').length > 0) {
+          cy.wrap($dialog).contains('×').should('exist')
+        } else if ($dialog.find(':contains("X")').length > 0) {
+          cy.wrap($dialog).contains('X').should('exist')
+        } else if ($dialog.find(':contains("x")').length > 0) {
+          cy.wrap($dialog).contains('x').should('exist')
         }
       })
-
-      cy.get('main ul a').should('have.attr', 'href').and('match', /[?=]/)
     })
 
-    it('(0.5) Os links (âncoras) devem ter cor #333 com uma transição no hover para alterar a opacidade para 0.8', () => {
-      cy.get('main ul a').should('have.css', 'color', 'rgb(51, 51, 51)')
-      cy.get('main ul a').should('have.css', 'transition')
+    it('(0.25) Adicione um botão "Aplicar" para aplicar os filtros e fechar o modal', () => {
+      cy.get('dialog button').should('contain.text', 'Aplicar')
     })
 
-    it('Valida e atualiza minicipios url', () => {
-      cy.request({
-        method: 'GET',
-        url: `${url}${municipiosUrl}=AP`,
-        failOnStatusCode: false,
-      }).then((response) => {
-        if (response.status === 404) {
-          municipiosUrl = `/municipios/index.html?uf`
-        }
-      })
+    it('(1) Ao aplicar, os filtros devem ser refletidos na URL da página, com query string, e os dados devem ser atualizados', () => {
+      cy.get('header svg').click()
+
+      cy.contains('dialog form label', 'Tipo:')
+        .next('select')
+        .then(($select) => {
+          cy.wrap($select).select('Release')
+        })
+      cy.get('dialog button').click()
+      cy.url().should('include', '=release')
     })
   })
 
-  describe('Página de Municípios (./municipios/index.html) (4 pontos)', () => {
-    beforeEach(() => {
-      cy.intercept('GET', `${apiUrl}/*/municipios`).as('ibgeMunicipiosRequest')
-
-      cy.visit(`${url}${municipiosUrl}=AP`)
+  describe('(1.5) Buscar as Notícias da API do IBGE', () => {
+    it('(0.15) Utilize a API http://servicodados.ibge.gov.br/api/v3/noticias para buscar as notícias', () => {
+      cy.wait('@getNoticias').its('response.statusCode').should('eq', 200)
     })
 
-    it('(1) Utilize a API do IBGE para buscar os municípios de um estado específico, baseado no UF passado via querystring', () => {
-      cy.wait('@ibgeMunicipiosRequest', { timeout: 10000 })
-        .its('response.statusCode')
-        .should('eq', 200)
-    })
-
-    it('(0.5) Exiba o título da página como "Municípios de {UF}", onde {UF} é substituído pelo UF recebido na querystring', () => {
-      cy.get('h1').should(($h1) => {
-        const text = $h1
-          .text()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-        expect(text.toLowerCase()).to.match(/munic[ií]pios de ap/i)
-      })
-    })
-
-    it('(0.25) Liste os municípios dentro de uma lista não ordenada (ul)', () => {
-      cy.get('main ul').should('exist')
-      cy.get('main ul > li').should('have.length.above', 1)
-    })
-
-    it('(0.25) Remova os bullet points da lista', () => {
-      cy.get('main ul').should('satisfy', ($ul) => {
-        const listStyleType = $ul.css('list-style-type')
-        const listStyle = $ul.css('list-style')
-        const listItemStyle = $ul.find('li').css('list-style-type')
-        return (
-          listStyleType === 'none' ||
-          listStyle === 'none' ||
-          listItemStyle === 'none'
-        )
-      })
-    })
-
-    it('(0.25) Cada município deve ser exibido como um item de lista (li) com o nome do município e um botão para favoritar', () => {
-      cy.get('main ul').should('exist')
-      cy.get('main ul > li')
-        .should('have.length.above', 1)
-        .should(($lis) => {
-          const button = $lis.first().find('button')[0]
-          expect(button).to.exist
-          button.innerText.includes('Favoritar', { matchCase: false })
+    it('(0.25) Utilize a documentação https://servicodados.ibge.gov.br/api/docs/noticias?versao=3, atualize o input de "Tipo" para os valores possíveis', () => {
+      cy.contains('dialog form label', 'Tipo:')
+        .nextAll('select')
+        .first()
+        .find('option')
+        .then((options) => {
+          const values = [...options].map((o) => o.value)
+          expect(values).to.include.members(['noticia', 'release'])
         })
     })
 
-    it('(0.25) O botão de favoritar deve ter cor de fundo #ff4136 e uma transição no hover para alterar a opacidade para 0.8', () => {
-      cy.get('main ul').should('exist')
-
-      cy.get('main ul > li:first-of-type button')
-        .should('have.css', 'background-color', 'rgb(255, 65, 54)')
-        .and('have.css', 'transition')
-    })
-
-    it('(1.5) Ao clicar no botão de favoritar, o objeto do município deve ser adicionado a uma lista de favoritos no localStorage. Utilize favoritos como nome da chave localStorage', () => {
-      cy.get('main ul > li:first-child').within(($li) => {
-        $li.find('button').click()
-        cy.window()
-          .its('localStorage')
-          .invoke('getItem', 'favoritos')
-          .should('include', 'Serra do Navio')
-      })
-    })
-  })
-
-  describe('Página de Favoritos (./favoritos/index.html) (1 ponto)', () => {
-    it('(1) Buscar a lista de favoritos salva em localStorage e exibir o nome do municipio em uma ul/li cada município favoritado.', () => {
-      cy.visit(`${url}${municipiosUrl}=AP`)
-      const municipios = ['Serra do Navio', 'Amapá', 'Pedra Branca do Amapari']
-
-      cy.get('main ul > li:nth-child(1)').within(($li) => {
-        //Serra do Navio
-        $li.find('button').click()
-      })
-
-      cy.get('main ul > li:nth-child(2)').within(($li) => {
-        // 'Amapá'
-        $li.find('button').click()
-      })
-
-      cy.get('main ul > li:nth-child(3)').within(($li) => {
-        // 'Pedra Branca do Amapari'
-        $li.find('button').click()
-      })
-
-      cy.visit(`${url}${favoritosUrl}`)
-
-      cy.window()
-        .its('localStorage')
-        .invoke('getItem', 'favoritos')
-        .then((favoritos) => {
-          const favoritosArray = JSON.parse(favoritos)
-          cy.get('main ul li').should('have.length', 3)
-          favoritosArray.forEach((_, index) => {
-            cy.get('main ul > li').eq(index).contains(municipios[index])
-          })
-        })
-    })
-  })
-
-  describe('Funcionalidades Extras (0.5 pontos)', () => {
-    it('(0.25) Adicione um link (âncora) com o texto "Ver favoritos", no header da página principal e na página de municípios, o link deve direcionar para a página de favoritos (./favoritos/index.html)', () => {
+    it('(0.1) Por padrão, busque somente 10 notícias', () => {
+      cy.intercept('GET', `${apiUrl}`).as('getNoticias')
       cy.visit(url)
+      cy.wait('@getNoticias')
+        .its('response.body.items')
+        .should('have.length', 10)
+    })
 
-      cy.get('header a')
-        .should('exist')
-        .should(($anchors) => {
-          const filteredAnchors = $anchors.filter((_, anchor) => {
-            return anchor.textContent
-              .trim()
-              .toLowerCase()
-              .includes('favorito', { matchCase: false })
-          })
+    it('(1) A api deve ser chamada com os filtros da query string, filtrados pelo usuário', () => {
+      cy.visit('https://satinp.github.io/portal-ibge?qtd=5&tipo=release')
+      cy.wait('@getNoticias')
+        .its('request.url')
+        .should('include', 'tipo=release')
+        .and('include', 'qtd=5')
+    })
+  })
 
-          expect(filteredAnchors).to.have.length.above(0)
-
-          const href = filteredAnchors[0].getAttribute('href')
-          expect(href).to.include('favoritos/index.html')
-        })
-
-      cy.visit(`${url}${municipiosUrl}=AP`)
-
-      cy.get('header a')
-        .should('exist')
-        .should(($anchors) => {
-          const filteredAnchors = $anchors.filter((_, anchor) => {
-            return anchor.textContent
-              .trim()
-              .toLowerCase()
-              .includes('favorito', { matchCase: false })
-          })
-
-          expect(filteredAnchors).to.have.length.above(0)
-
-          const href = filteredAnchors[0].getAttribute('href')
-          expect(href).to.include('favoritos/index.html')
+  describe('(1.3) Listar as Notícias Dentro de uma <ul> <li>', () => {
+    it('(0.25) Após obter os dados das notícias da API, itere sobre esses dados e crie elementos <li> para cada notícia', () => {
+      cy.wait('@getNoticias')
+        .its('response.body.items')
+        .each((item) => {
+          cy.get('main > ul li').should('contain.text', item.titulo)
         })
     })
 
-    it('(0.25) Adicione um link (âncora) com o texto "Ir para a home", no header das páginas de municípios e de favoritos, que direciona para a página principal (./index.html)', () => {
-      cy.visit(`${url}${municipiosUrl}=AP`)
+    it('(0.1) Liste esses elementos dentro de uma <ul>', () => {
+      cy.get('main > ul').children('li').should('have.length.greaterThan', 1)
+    })
 
-      cy.get('header a')
-        .should('exist')
-        .should(($anchors) => {
-          const filteredAnchors = $anchors.filter((_, anchor) => {
-            return anchor.textContent
-              .trim()
-              .toLowerCase()
-              .includes('home', { matchCase: false })
-          })
+    it('(0.1) Cada notícia deve conter a imagem da noticia, o título em um h2, introdução em um parágrafo', () => {
+      cy.get('main > ul li')
+        .first()
+        .within(() => {
+          cy.get('img').should('exist')
+          cy.get('h2').should('exist')
+          cy.get('p').should('exist')
+        })
+    })
 
-          expect(filteredAnchors).to.have.length.above(0)
+    it('(0.3) A imagem fica em um objeto stringified, e precisa ser concatenada com a url de noticias do IBGE', () => {
+      cy.get('main > ul li img')
+        .first()
+        .should('have.attr', 'src')
+        .and('include', 'https://agenciadenoticias.ibge.gov.br/')
+    })
 
-          const href = filteredAnchors[0].getAttribute('href')
-          expect(href).to.include('../index.html')
+    it('(0.2) Mostrar as editorias da notícia com prefixo #', () => {
+      cy.get('main > ul li').first().should('contain.text', '#')
+    })
+
+    it('(0.25) Mostrar a quanto tempo a notícia foi publicada', () => {
+      // Validação da data anulada, pois a api foi alterada.
+      cy.get('main > ul li').first().should('contain.text', 'Publicado')
+    })
+
+    it('(0.1) Adicione um botão "Leia Mais" ao final de cada notícia', () => {
+      cy.get('main > ul li').contains(/leia mais/i)
+    })
+  })
+
+  describe('(0.7) Botões de Paginação no Final das Notícias', () => {
+    it('(0.1) Crie botões de paginação no final das notícias utilizando elementos <button> dentro de <ul> <li>', () => {
+      cy.get('main ul:last li button').should('exist')
+    })
+
+    it('(0.25) Mostre no máximo 10 botões de páginas', () => {
+      cy.get('main ul').last().find('li').should('have.length', 10)
+    })
+
+    it('(0.1) Indique visualmente a página atual com uma cor de fundo #4682b4', () => {
+      cy.get('main > ul')
+        .last() // Seleciona o último <ul> dentro de <main>
+        .find('li')
+        .first() // Seleciona o primeiro <li> dentro desse <ul>
+        .children()
+        .first() // Seleciona o primeiro filho dessa última <li>
+        .should('have.css', 'background-color', 'rgb(70, 130, 180)')
+    })
+
+    it('(0.25) Atualizar a querystring da página ao clicar em um botão de paginação', () => {
+      cy.url().should('not.include', 'page=2')
+      cy.get('main > ul')
+        .last() // Seleciona o último <ul> dentro de <main>
+        .find('li')
+        .contains('2')
+        .click()
+      cy.url().should('include', 'page=2')
+    })
+  })
+
+  describe('(0.1) Remover Todos os Bullet Points de <ul> <li>', () => {
+    it('(0.1) Utilize CSS para remover os bullet points padrão de listas não ordenadas (<ul>)', () => {
+      cy.get('main > ul')
+        .first()
+        .should('satisfy', ($ul) => {
+          const listStyleType = $ul.css('list-style-type')
+          const listStyle = $ul.css('list-style')
+          const listItemStyle = $ul.find('li').css('list-style-type')
+          return (
+            listStyleType === 'none' ||
+            listStyle === 'none' ||
+            listItemStyle === 'none'
+          )
         })
 
-      cy.visit(`${url}${favoritosUrl}`)
-
-      cy.get('header a')
-        .should('exist')
-        .should(($anchors) => {
-          const filteredAnchors = $anchors.filter((_, anchor) => {
-            return anchor.textContent
-              .trim()
-              .toLowerCase()
-              .includes('home', { matchCase: false })
-          })
-
-          expect(filteredAnchors).to.have.length.above(0)
-
-          const href = filteredAnchors[0].getAttribute('href')
-          expect(href).to.include('../index.html')
+      cy.get('main > ul')
+        .last()
+        .should('satisfy', ($ul) => {
+          const listStyleType = $ul.css('list-style-type')
+          const listStyle = $ul.css('list-style')
+          const listItemStyle = $ul.find('li').css('list-style-type')
+          return (
+            listStyleType === 'none' ||
+            listStyle === 'none' ||
+            listItemStyle === 'none'
+          )
         })
+    })
+  })
+
+  describe('(0.7) Responsividade', () => {
+    it('(0.2) Garanta que a página seja responsiva e não quebre em resoluções menores', () => {
+      cy.viewport('iphone-6')
+      cy.screenshot('iphone-6')
+      cy.get('body').should('be.visible')
+    })
+
+    it('(0.5) Utilize CSS Grid para organizar os campos de filtro em duas colunas em resoluções maiores que 760px e em uma coluna em resoluções menores', () => {
+      cy.viewport(1024, 768)
+      cy.get('dialog form')
+        .should('have.css', 'grid-template-columns')
+        .and(
+          'match',
+          /(repeat\(2, (auto|1fr|100%))|(auto auto|1fr 1fr|50% 50%| 100% 100%)/
+        )
+
+      cy.viewport(760, 500)
+      cy.get('dialog form')
+        .should('have.css', 'grid-template-columns')
+        .and('match', /(auto|1fr|100%)/)
     })
   })
 })
